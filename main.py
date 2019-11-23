@@ -74,17 +74,27 @@ class VkBot:
                             bot_message = f'Привет {name}, похоже что ты пишешь мне впервые\n'\
                             'Приятно познакомиться)\n'\
                             'А вот список доступных команд:\n'\
-                            '1. !сменить имя на <новое имя>\n'\
+                            '1. !называй меня <новое имя>\n'\
                             '2. !погода <место и время>'
                             self.send_msg(user_id=event.user_id,
                             message=bot_message)
                         else:
                             user = users[event.user_id]
-                            if '!погода' in event.text:
-                                degress = self.get_weather(event.text)
-                                bot_message = f'{degress}, не блогадари)'
-                                self.send_msg(user_id=event.user_id,
-                                message=bot_message)
+                            if user['state'] == 'command':
+                                if '!погода' in event.text:
+                                    degress = self.get_weather(event.text)
+                                    bot_message = f'{degress}, не блогадари)'
+                                    self.send_msg(user_id=event.user_id,
+                                    message=bot_message)
+                                elif '!называй меня' in event.text:
+                                    self.rename_user(event.user_id, event.text[13:])
+                                    users = self.load_users()
+                                    user = users[event.user_id]
+                                    bot_message = f'Ну хорошо, теперь буду звать тебя {user["name"]}'
+                                    self.send_msg(event.user_id,
+                                    bot_message)
+                            elif user['state'] == 'talk':
+                                pass
 
                     print(f'[ Bot: {bot_message} ]\n')
 
