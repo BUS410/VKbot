@@ -14,6 +14,7 @@ class VkBot:
         vk_session._auth_token()
         self.longpoll = VkLongPoll(vk_session)
         self.vk = vk_session.get_api()
+        self.talk_dict = json.load(open('talk.json', encoding='utf-8'))
 
     def load_users(self):
         users = {}
@@ -54,14 +55,25 @@ class VkBot:
         tags = [tag.text for tag in soup.find_all('div')]
         return tags[37]
 
-    def run(self):
-        print('[Start work bot]\n')
+    def talk(self, user_msg):
+        answers = []
+        for message, answer in self.talk_dict.items():
+            if message.lower() in user_msg.lower():
+                answers.append(answer)
+        if answers:
+            return choice(answers)
+        else:
+            return 'Непонел'
 
+    def run(self):
         users = self.load_users()
+
+        print('[Start work bot]\n')
 
         for event in self.longpoll.listen():
             if event.type == VkEventType.MESSAGE_NEW and event.to_me and event.text:
                 if event.from_user:
+                    bot_message = "None"
                     print(f'[ User: {event.user_id} ]')
                     print(f'[ Message: {event.text} ]')
                     if event.user_id == self.admin_id and event.text.lower() == 'выкл':
@@ -71,11 +83,14 @@ class VkBot:
                             self.create_user(event.user_id)
                             users = self.load_users()
                             name = users[event.user_id]['name']
-                            bot_message = f'Привет {name}, похоже что ты пишешь мне впервые\n'\
+                            bot_message = \
+                            f'Привет {name}, похоже что ты пишешь мне впервые\n'\
                             'Приятно познакомиться)\n'\
                             'А вот список доступных команд:\n'\
                             '1. !называй меня <новое имя>\n'\
-                            '2. !погода <место и время>'
+                            '2. !погода <место и время>\n'\
+                            '3. !начать общение\n'\
+                            '4. !помощь'
                             self.send_msg(user_id=event.user_id,
                             message=bot_message)
                         else:
@@ -83,7 +98,7 @@ class VkBot:
                             if user['state'] == 'command':
                                 if '!погода' in event.text:
                                     degress = self.get_weather(event.text)
-                                    bot_message = f'{degress}, не блогадари)'
+                                    bot_message = f'{degress}, не блогадари, {user["name"]})'
                                     self.send_msg(user_id=event.user_id,
                                     message=bot_message)
                                 elif '!называй меня' in event.text:
@@ -93,8 +108,29 @@ class VkBot:
                                     bot_message = f'Ну хорошо, теперь буду звать тебя {user["name"]}'
                                     self.send_msg(event.user_id,
                                     bot_message)
+                                elif event.text == '!начать общение':
+                                    users[event.user_id]['state'] = 'talk'
+                                    self.send_msg(event.user_id,
+                                    'Чтобы остановить общение напишите "!остановить общение"')
+                                elif event.text == '!помощь':
+                                    bot_message = \
+                                    'Команды:\n'\
+                                    '1. !называй меня <новое имя>\n'\
+                                    '2. !погода <место и время>\n'\
+                                    '3. !начать общение\n'\
+                                    '4. !помощь'
+                                    self.send_msg(event.user_id,
+                                    bot_message
+                                    )
                             elif user['state'] == 'talk':
-                                pass
+                                if event.text == '!остановить общение':
+                                    users[event.user_id]['state'] = 'command'
+                                    self.send_msg(event.user_id,
+                                    'Общение остановлено')
+                                else:
+                                    bot_message = self.talk(event.text)
+                                    self.send_msg(event.user_id,
+                                    bot_message)
 
                     print(f'[ Bot: {bot_message} ]\n')
 
