@@ -76,7 +76,7 @@ class VkBot:
                     bot_message = "None"
                     print(f'[ User: {event.user_id} ]')
                     print(f'[ Message: {event.text} ]')
-                    if event.user_id == self.admin_id and event.text.lower() == 'выкл':
+                    if event.user_id == self.admin_id and event.text.lower() == '!выкл':
                         break
                     else:
                         if event.user_id not in users:
@@ -89,8 +89,7 @@ class VkBot:
                             'А вот список доступных команд:\n'\
                             '1. !называй меня <новое имя>\n'\
                             '2. !погода <место и время>\n'\
-                            '3. !начать общение\n'\
-                            '4. !помощь'
+                            '3. !начать общение'
                             self.send_msg(user_id=event.user_id,
                             message=bot_message)
                         else:
@@ -111,14 +110,14 @@ class VkBot:
                                 elif event.text == '!начать общение':
                                     users[event.user_id]['state'] = 'talk'
                                     self.send_msg(event.user_id,
-                                    'Чтобы остановить общение напишите "!остановить общение"')
-                                elif event.text == '!помощь':
+                                    'Чтобы остановить общение напишите "!остановить общение"\n'\
+                                    f'Чтож {user["name"]}, давай поболтаем')
+                                else:
                                     bot_message = \
                                     'Команды:\n'\
                                     '1. !называй меня <новое имя>\n'\
                                     '2. !погода <место и время>\n'\
-                                    '3. !начать общение\n'\
-                                    '4. !помощь'
+                                    '3. !начать общение'
                                     self.send_msg(event.user_id,
                                     bot_message
                                     )
