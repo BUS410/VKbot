@@ -1,11 +1,11 @@
-import vk_api
 import json
 from random import randint, choice
 from vk_api.longpoll import VkLongPoll, VkEventType
 from os import listdir
 import requests
 from bs4 import BeautifulSoup
-
+import vk_api
+import wikipedia as wiki
 
 class VkBot:
     def __init__(self, token, admin_id):
@@ -15,6 +15,7 @@ class VkBot:
         self.longpoll = VkLongPoll(vk_session)
         self.vk = vk_session.get_api()
         self.talk_dict = json.load(open('talk.json', encoding='utf-8'))
+        wiki.set_lang('RU')
 
     def load_users(self):
         users = {}
@@ -22,6 +23,13 @@ class VkBot:
             user_id = int(user_file[:-5])
             users[user_id] = json.load(open('users/'+user_file, encoding='utf-8'))
         return users
+
+    def get_info(self, request):
+        try:
+            res = wiki.page(request).summary
+        except:
+            res = 'Извини, не понимаю'
+        return res
 
     def rename_user(self, user_id, new_name):
         with open(f'users/{user_id}.json', 'w', encoding='utf-8') as file:
@@ -89,7 +97,9 @@ class VkBot:
                             'А вот список доступных команд:\n'\
                             '1. !называй меня <новое имя>\n'\
                             '2. !погода <место и время>\n'\
-                            '3. !начать общение'
+                            '3. !начать общение\n'\
+                            '4. что такое <что-то>\n'\
+                            '5. кто такой <кто-то>'
                             self.send_msg(user_id=event.user_id,
                             message=bot_message)
                         else:
@@ -112,6 +122,10 @@ class VkBot:
                                     self.send_msg(event.user_id,
                                     'Чтобы остановить общение напишите "!остановить общение"\n'\
                                     f'Чтож {user["name"]}, давай поболтаем')
+                                elif 'что такое ' in event.text.lower() or 'кто такой ' in event.text.lower():
+                                    bot_message = self.get_info(event.text)
+                                    self.send_msg(event.user_id,
+                                    bot_message)
                                 else:
                                     bot_message = \
                                     'Команды:\n'\
